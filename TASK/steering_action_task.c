@@ -25,6 +25,17 @@ volatile uint8_t steering_action_task_exit;
 portTASK_FUNCTION(steering_action_task, pvParameters)
 {
 	uint32_t index;
+    action_group_t *action_group_save;
+    //uint8_t action_group_index;
+    
+    //动作组分区处理
+    if (*((uint16_t *)pvParameters) < 16) {
+        action_group_save = action_group_save_main;
+        //action_group_index = *((uint16_t *)pvParameters);
+    } else {
+        action_group_save = action_group_save_second;
+        //action_group_index = *((uint16_t *)pvParameters) - 16;
+    }
 	
 	//寻找动作组开始位置
 	for (index = 0; index < 8192; index++) {

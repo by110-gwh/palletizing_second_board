@@ -25,6 +25,15 @@ portTASK_FUNCTION(vStartTask, pvParameters)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
     
+	//使能GPIOA时钟
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	//初始化IO引脚
+	GPIO_InitStruct.Pin = GPIO_PIN_15;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    
 	//使能GPIOC时钟
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	//初始化IO引脚

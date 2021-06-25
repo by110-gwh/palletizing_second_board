@@ -94,6 +94,12 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
 	BaseType_t xHigherPriorityTaskWoken;
 	xHigherPriorityTaskWoken = pdFALSE;
 	if (event_idx == 5 && state == 3) {
+        if (((rec_cmd_t *)((uint8_t *)hUsbDeviceFS.pClassData + 2))->cmd == 9) {
+            if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == 0) {
+                ((rec_cmd_t *)((uint8_t *)hUsbDeviceFS.pClassData + 2))->data_l += 16;
+            }
+        }
+        
 		xQueueSendFromISR(rec_data_queue, ((uint8_t *)hUsbDeviceFS.pClassData) + 2, &xHigherPriorityTaskWoken);
 	} else {
 		USBD_CUSTOM_HID_ReceivePacket(&hUsbDeviceFS);
