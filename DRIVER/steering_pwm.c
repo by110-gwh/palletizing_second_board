@@ -5,41 +5,41 @@
 
 //通道IO输出高电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_H
-#define CH1_H PAout(0) = 1
-#define CH2_H PAout(1) = 1
-#define CH3_H PAout(2) = 1
-#define CH4_H PAout(3) = 1
-#define CH5_H PAout(4) = 1
-#define CH6_H PAout(5) = 1
-#define CH7_H PAout(6) = 1
-#define CH8_H PAout(7) = 1
-#define CH9_H PBout(0) = 1
-#define CH10_H PBout(1) = 1
-#define CH11_H PBout(2) = 1
-#define CH12_H PBout(3) = 1
-#define CH13_H PBout(4) = 1
-#define CH14_H PBout(5) = 1
-#define CH15_H PBout(6) = 1
-#define CH16_H PBout(7) = 1
+#define CH1_H PAout(7) = 1
+#define CH2_H PBout(0) = 1
+#define CH3_H PBout(1) = 1
+#define CH4_H PBout(12) = 1
+#define CH5_H PBout(13) = 1
+#define CH6_H PBout(14) = 1
+#define CH7_H PBout(15) = 1
+#define CH8_H PAout(8) = 1
+#define CH9_H
+#define CH10_H
+#define CH11_H
+#define CH12_H
+#define CH13_H
+#define CH14_H
+#define CH15_H
+#define CH16_H
 
 //通道IO输出低电平，用户需重写
 //如某通道不用，则将后面清空，如#define CH16_L
-#define CH1_L PAout(0) = 0
-#define CH2_L PAout(1) = 0
-#define CH3_L PAout(2) = 0
-#define CH4_L PAout(3) = 0
-#define CH5_L PAout(4) = 0
-#define CH6_L PAout(5) = 0
-#define CH7_L PAout(6) = 0
-#define CH8_L PAout(7) = 0
-#define CH9_L PBout(0) = 0
-#define CH10_L PBout(1) = 0
-#define CH11_L PBout(2) = 0
-#define CH12_L PBout(3) = 0
-#define CH13_L PBout(4) = 0
-#define CH14_L PBout(5) = 0
-#define CH15_L PBout(6) = 0
-#define CH16_L PBout(7) = 0
+#define CH1_L PAout(7) = 0
+#define CH2_L PBout(0) = 0
+#define CH3_L PBout(1) = 0
+#define CH4_L PBout(12) = 0
+#define CH5_L PBout(13) = 0
+#define CH6_L PBout(14) = 0
+#define CH7_L PBout(15) = 0
+#define CH8_L PAout(8) = 0
+#define CH9_L
+#define CH10_L
+#define CH11_L
+#define CH12_L
+#define CH13_L
+#define CH14_L
+#define CH15_L
+#define CH16_L
 
 //各个通道高电平时间，单位us,范围0 - 4500
 volatile uint16_t steering_pulse_ch[16];
@@ -60,15 +60,15 @@ static void steering_gpio_init(void)
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	//初始化IO引脚
-	HAL_GPIO_WritePin(GPIOA, 0xFF, GPIO_PIN_RESET);
-	GPIO_InitStruct.Pin = 0xFF;
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7 | GPIO_PIN_8, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = GPIO_PIN_7 | GPIO_PIN_8;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 	
-	HAL_GPIO_WritePin(GPIOB, 0xFF, GPIO_PIN_RESET);
-	GPIO_InitStruct.Pin = 0xFF;
+	HAL_GPIO_WritePin(GPIOB, 0xF003, GPIO_PIN_RESET);
+	GPIO_InitStruct.Pin = 0xF003;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

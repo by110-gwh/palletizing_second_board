@@ -87,6 +87,12 @@ void soft_serial_tim4_init(void)
     //使能定时器中断
     HAL_NVIC_SetPriority(TIM4_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(TIM4_IRQn);
+    
+    //定时器时序复位
+    HAL_Delay(100);
+    is_raise = 1;
+    HAL_Delay(100);
+    is_raise = 0;
 }
 
 /**********************************************************************************************************
@@ -106,80 +112,84 @@ void soft_serial_cb_4(uint8_t data)
 void TIM4_IRQHandler(void)
 {
     //上升沿
-    if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_CC1)) {
-        if (is_raise == 1) {
-            //串口时钟间隔
-            uint8_t clock;
-            
-            //获取当前定时器计数
-            timestamp_4 = __HAL_TIM_GetCompare(&htim4, TIM_CHANNEL_1);
-            //计算相邻两次中断的串口位数
-            if (timestamp_4 > last_timestamp_4)
-                clock = (timestamp_4 - last_timestamp_4 + 5) / 10;
-            else
-                clock = (timestamp_4 + 400 - 1 - last_timestamp_4 + 5) / 10;
-            //更新上次电平跳变时间戳
-            last_timestamp_4 = timestamp_4;
-            
-            //更新已接收位个数
-            rec_bit_4 += clock;
-            //记录定时器更新计数，便于定时器识别是否超时
+    if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_CC1) && is_raise == 1) {
+        //串口时钟间隔
+        uint8_t clock;
+        
+        //获取当前定时器计数
+        timestamp_4 = __HAL_TIM_GetCompare(&htim4, TIM_CHANNEL_1);
+        //计算相邻两次中断的串口位数
+        if (timestamp_4 > last_timestamp_4)
+            clock = (timestamp_4 - last_timestamp_4 + 5) / 10;
+        else
+            clock = (timestamp_4 + 400 - 1 - last_timestamp_4 + 5) / 10;
+        //更新上次电平跳变时间戳
+        last_timestamp_4 = timestamp_4;
+        
+        //更新已接收位个数
+        rec_bit_4 += clock;
+        //记录定时器更新计数，便于定时器识别是否超时
+        if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_UPDATE) && timestamp_4 < 200) {
+            timer_note_4 = timer_cnt + 1;
+        } else {
             timer_note_4 = timer_cnt;
-            //起始位+8个数据位接受完毕
-            if (rec_bit_4 == 9) {
-                //复位已接收位个数
-                rec_bit_4 = 0;
-                //接收完毕回调
-                soft_serial_cb_4(rec_data_4);
-                //接收数据清零
-                rec_data_4 = 0;
-            }
-            is_raise = 0;
         }
+        //起始位+8个数据位接受完毕
+        if (rec_bit_4 == 9) {
+            //复位已接收位个数
+            rec_bit_4 = 0;
+            //接收完毕回调
+            soft_serial_cb_4(rec_data_4);
+            //接收数据清零
+            rec_data_4 = 0;
+        }
+        is_raise = 0;
         //清除定时器中断标志
         __HAL_TIM_CLEAR_IT(&htim4, TIM_IT_CC1);
-    }
     //下降沿
-    if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_CC2)) {
-        if (is_raise == 0) {
-            //串口时钟间隔
-            uint8_t clock;
-            
-            //获取当前定时器计数
-            timestamp_4 = __HAL_TIM_GetCompare(&htim4, TIM_CHANNEL_2);
-            //计算相邻两次中断的串口位数
-            if (timestamp_4 > last_timestamp_4)
-                clock = (timestamp_4 - last_timestamp_4 + 5) / 10;
-            else
-                clock = (timestamp_4 + 400 - 1 - last_timestamp_4 + 5) / 10;
-            //更新上次电平跳变时间戳
-            last_timestamp_4 = timestamp_4;
-            //由于上一次的最后几个数据位为1，无法产新的终端，只能通过下一次数据的起始位或者定时器
-            //更新终端来完成上一次数据的接收。
-            //上一次数据需要完成接收
-            if (rec_bit_4 && rec_bit_4 + clock > 9) {
-                //上一次数据最后几个数据位置1
-                rec_data_4 |= ((1 << (9 - rec_bit_4)) - 1) << (rec_bit_4 - 1);
-                //复位已接收位个数
-                rec_bit_4 = 0;
-                //接收完毕回调
-                soft_serial_cb_4(rec_data_4);
-                //接收数据清零
-                rec_data_4 = 0;
-            } else if (rec_bit_4) {
-                //根据高电平的时间和已接收位个数将数据的相应位置1
-                rec_data_4 |= ((1 << clock) - 1) << (rec_bit_4 - 1);
-                //更新已接收位个数
-                rec_bit_4 += clock;
-            }
-            is_raise = 1;
+    } else if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_CC2) && is_raise == 0) {
+        //串口时钟间隔
+        uint8_t clock;
+        
+        //获取当前定时器计数
+        timestamp_4 = __HAL_TIM_GetCompare(&htim4, TIM_CHANNEL_2);
+        //计算相邻两次中断的串口位数
+        if (timer_note_4 != timer_cnt) {
+            clock = (timestamp_4 + 400 - 1 - last_timestamp_4 + 5) / 10;
+        } else if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_UPDATE) && timestamp_4 < 200) {
+            clock = (timestamp_4 + 400 - 1 - last_timestamp_4 + 5) / 10;
+        } else if (timestamp_4 > last_timestamp_4) {
+            clock = (timestamp_4 - last_timestamp_4 + 5) / 10;
+        } else {
+            clock = (timestamp_4 + 400 - 1 - last_timestamp_4 + 5) / 10;
         }
+        //更新上次电平跳变时间戳
+        last_timestamp_4 = timestamp_4;
+        //由于上一次的最后几个数据位为1，无法产新的终端，只能通过下一次数据的起始位或者定时器
+        //更新终端来完成上一次数据的接收。
+        //上一次数据需要完成接收
+        if (rec_bit_4 && rec_bit_4 + clock > 9) {
+            //上一次数据最后几个数据位置1
+            rec_data_4 |= ((1 << (9 - rec_bit_4)) - 1) << (rec_bit_4 - 1);
+            //复位已接收位个数
+            rec_bit_4 = 0;
+            //接收完毕回调
+            soft_serial_cb_4(rec_data_4);
+            //接收数据清零
+            rec_data_4 = 0;
+        } else if (rec_bit_4) {
+            //根据高电平的时间和已接收位个数将数据的相应位置1
+            rec_data_4 |= ((1 << clock) - 1) << (rec_bit_4 - 1);
+            //更新已接收位个数
+            rec_bit_4 += clock;
+        }
+        is_raise = 1;
         //清除定时器中断标志
         __HAL_TIM_CLEAR_IT(&htim4, TIM_IT_CC2);
     }
     if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_UPDATE)) {
         //是否有未接受完成的数据超时
-        if (timer_note_4 < timer_cnt && rec_bit_4) {
+        if (timer_note_4 - timer_cnt > 0x80U && rec_bit_4) {
             //上一次数据最后几个数据位置1
             rec_data_4 |= ((1 << (9 - rec_bit_4)) - 1) << (rec_bit_4 - 1);
             //复位已接收位个数
