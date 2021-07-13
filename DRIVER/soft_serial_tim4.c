@@ -104,7 +104,8 @@ void soft_serial_tim4_init(void)
 void soft_serial_cb_4(uint8_t data)
 {
     //把数据传给主串口
-    circ_buf_push_two(&main_serial_cicr_buf, 4, data);
+    circ_buf_push(&main_serial_cicr_buf, 4);
+    circ_buf_push(&main_serial_cicr_buf, data);
     //使能主串口发送中断
     main_serial_send();
 }
@@ -186,6 +187,11 @@ void TIM4_IRQHandler(void)
         is_raise = 1;
         //清除定时器中断标志
         __HAL_TIM_CLEAR_IT(&htim4, TIM_IT_CC2);
+    } else {
+        is_raise = 0;
+        rec_bit_4 = 0;
+        rec_data_4 = 0;
+        __HAL_TIM_CLEAR_IT(&htim4, TIM_IT_CC1 | TIM_IT_CC2);
     }
     if (__HAL_TIM_GET_FLAG(&htim4, TIM_IT_UPDATE)) {
         //是否有未接受完成的数据超时

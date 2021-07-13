@@ -38,24 +38,6 @@ void circ_buf_init(circ_buf_t *circ_buf, uint8_t *buffer, uint32_t size)
     __enable_irq();
 }
 
-void circ_buf_push_two(circ_buf_t *circ_buf, uint8_t data1, uint8_t data2)
-{
-    __disable_irq();
-
-    circ_buf->buf[circ_buf->tail] = data1;
-    circ_buf->buf[circ_buf->tail + 1] = data2;
-    circ_buf->tail += 2;
-    if (circ_buf->tail >= circ_buf->size) {
-        util_assert(circ_buf->tail == circ_buf->size);
-        circ_buf->tail = 0;
-    }
-
-    // Assert no overflow
-    util_assert(circ_buf->head != circ_buf->tail);
-    
-    __enable_irq();
-}
-
 void circ_buf_push(circ_buf_t *circ_buf, uint8_t data)
 {
     __disable_irq();

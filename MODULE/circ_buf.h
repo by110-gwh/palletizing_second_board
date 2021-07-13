@@ -39,9 +39,6 @@ typedef struct {
 // Initialize or reinitialize a circular buffer
 void circ_buf_init(circ_buf_t *circ_buf, uint8_t *buffer, uint32_t size);
 
-// Push two bytes into the circular buffer
-void circ_buf_push_two(circ_buf_t *circ_buf, uint8_t data1, uint8_t data2);
-
 // Push a byte into the circular buffer
 void circ_buf_push(circ_buf_t *circ_buf, uint8_t data);
 

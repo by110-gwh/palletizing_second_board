@@ -30,7 +30,7 @@ void main_serial_init(void)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -89,16 +89,23 @@ void USART1_IRQHandler(void)
             switch (rec_id) {
                 //数据发送给舵机控制
                 case 1:
-                    steering_rec_buf[steering_rec_cnt] = Res;
-                    steering_rec_cnt++;
-                    if (steering_rec_cnt == 5) {
+                    if (steering_rec_cnt == 0) {
+                        if (Res == 0xFF) {
+                            steering_rec_buf[0] = Res;
+                            steering_rec_cnt = 1;
+                        }
+                    } else if (steering_rec_cnt == 4) {
                         BaseType_t xHigherPriorityTaskWoken;
+                        steering_rec_buf[4] = Res;
                         xHigherPriorityTaskWoken = pdFALSE;
                         xQueueSendFromISR(rec_data_queue, steering_rec_buf, &xHigherPriorityTaskWoken);
                         if(xHigherPriorityTaskWoken) {
                             portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
                         }
                         steering_rec_cnt = 0;
+                    } else {
+                        steering_rec_buf[steering_rec_cnt] = Res;
+                        steering_rec_cnt++;
                     }
                     break;
                 //数据发送给副串口
